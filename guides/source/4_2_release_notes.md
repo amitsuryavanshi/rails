@@ -104,6 +104,9 @@ for detailed changes.
 
 ### Removals
 
+* Removed deprecated `Numeric#ago`, `Numeric#until`, `Numeric#since`,
+  `Numeric#from_now`. ([Commit](https://github.com/rails/rails/commit/f1eddea1e3f6faf93581c43651348f48b2b7d8bb))
+
 * Removed deprecated string based terminators for `ActiveSupport::Callbacks`.
   ([Pull Request](https://github.com/rails/rails/pull/15100))
 
