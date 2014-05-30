@@ -1167,6 +1167,13 @@ class EagerAssociationTest < ActiveRecord::TestCase
     )
   end
 
+  test "deep preload" do
+    post = Post.preload(author: :posts, comments: :post).first
+
+    assert_predicate post.author.association(:posts), :loaded?
+    assert_predicate post.comments.first.association(:post), :loaded?
+  end
+
   test "preloading does not cache has many association subset when preloaded with a through association" do
     author = Author.includes(:comments_with_order_and_conditions, :posts).first
     assert_no_queries { assert_equal 2, author.comments_with_order_and_conditions.size }
@@ -1194,6 +1201,15 @@ class EagerAssociationTest < ActiveRecord::TestCase
     assert_nothing_raised do
       authors(:david).essays.includes(:writer).select(:name).any?
     end
+  end
+
+  test "preloading the same association twice works" do
+    Member.create!
+    members = Member.preload(:current_membership).includes(current_membership: :club).all.to_a
+    assert_no_queries {
+      members_with_membership = members.select(&:current_membership)
+      assert_equal 3, members_with_membership.map(&:current_membership).map(&:club).size
+    }
   end
 
   test "preloading with a polymorphic association and using the existential predicate" do

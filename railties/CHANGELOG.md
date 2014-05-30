@@ -1,3 +1,11 @@
+*   Add `bin/setup` script to bootstrap an application.
+
+    *Yves Senn*
+
+*   Replace double quotes with single quotes while adding an entry into Gemfile.
+
+    *Alexander Belaev*
+
 *   Default `config.assets.digest` to `true` in development.
 
     *Dan Kang*
@@ -21,10 +29,6 @@
 *   Move configuration of asset precompile list and version to an initializer.
 
     *Matthew Draper*
-
-*   Do not set the Rails environment to test by default when using test_unit Railtie.
-
-    *Konstantin Shabanov*
 
 *   Remove sqlite3 lines from `.gitignore` if the application is not using sqlite3.
 

@@ -5,7 +5,7 @@ module ActiveRecord
         private
 
         def visit_AddColumn(o)
-          sql_type = type_to_sql(o.type.to_sym, o.limit, o.precision, o.scale)
+          sql_type = type_to_sql(o.type, o.limit, o.precision, o.scale)
           sql = "ADD COLUMN #{quote_column_name(o.name)} #{sql_type}"
           add_column_options!(sql, column_options(o))
         end
@@ -97,16 +97,16 @@ module ActiveRecord
         # If the schema is not specified as part of +name+ then it will only find tables within
         # the current schema search path (regardless of permissions to access tables in other schemas)
         def table_exists?(name)
-          schema, table = Utils.extract_schema_and_table(name.to_s)
-          return false unless table
+          name = Utils.extract_schema_qualified_name(name.to_s)
+          return false unless name.identifier
 
           exec_query(<<-SQL, 'SCHEMA').rows.first[0].to_i > 0
               SELECT COUNT(*)
               FROM pg_class c
               LEFT JOIN pg_namespace n ON n.oid = c.relnamespace
               WHERE c.relkind IN ('r','v','m') -- (r)elation/table, (v)iew, (m)aterialized view
-              AND c.relname = '#{table.gsub(/(^"|"$)/,'')}'
-              AND n.nspname = #{schema ? "'#{schema}'" : 'ANY (current_schemas(false))'}
+              AND c.relname = '#{name.identifier}'
+              AND n.nspname = #{name.schema ? "'#{name.schema}'" : 'ANY (current_schemas(false))'}
           SQL
         end
 
@@ -181,8 +181,12 @@ module ActiveRecord
             oid = get_oid_type(oid.to_i, fmod.to_i, column_name, type)
             default_value = extract_value_from_default(default)
             default_function = extract_default_function(default_value, default)
-            PostgreSQLColumn.new(column_name, default_value, oid, type, notnull == 'f', default_function)
+            new_column(column_name, default_value, oid, type, notnull == 'f', default_function)
           end
+        end
+
+        def new_column(name, default, cast_type, sql_type = nil, null = true, default_function = nil) # :nodoc:
+          PostgreSQLColumn.new(name, default, cast_type, sql_type, null, default_function)
         end
 
         # Returns the current database name.
@@ -308,17 +312,19 @@ module ActiveRecord
           # First try looking for a sequence with a dependency on the
           # given table's primary key.
           result = query(<<-end_sql, 'SCHEMA')[0]
-            SELECT attr.attname, seq.relname
+            SELECT attr.attname, nsp.nspname, seq.relname
             FROM pg_class      seq,
                  pg_attribute  attr,
                  pg_depend     dep,
-                 pg_constraint cons
+                 pg_constraint cons,
+                 pg_namespace  nsp
             WHERE seq.oid           = dep.objid
               AND seq.relkind       = 'S'
               AND attr.attrelid     = dep.refobjid
               AND attr.attnum       = dep.refobjsubid
               AND attr.attrelid     = cons.conrelid
               AND attr.attnum       = cons.conkey[1]
+              AND seq.relnamespace  = nsp.oid
               AND cons.contype      = 'p'
               AND dep.classid       = 'pg_class'::regclass
               AND dep.refobjid      = '#{quote_table_name(table)}'::regclass
@@ -326,7 +332,7 @@ module ActiveRecord
 
           if result.nil? or result.empty?
             result = query(<<-end_sql, 'SCHEMA')[0]
-              SELECT attr.attname,
+              SELECT attr.attname, nsp.nspname,
                 CASE
                   WHEN pg_get_expr(def.adbin, def.adrelid) !~* 'nextval' THEN NULL
                   WHEN split_part(pg_get_expr(def.adbin, def.adrelid), '''', 2) ~ '.' THEN
@@ -338,13 +344,19 @@ module ActiveRecord
               JOIN pg_attribute   attr ON (t.oid = attrelid)
               JOIN pg_attrdef     def  ON (adrelid = attrelid AND adnum = attnum)
               JOIN pg_constraint  cons ON (conrelid = adrelid AND adnum = conkey[1])
+              JOIN pg_namespace   nsp  ON (t.relnamespace = nsp.oid)
               WHERE t.oid = '#{quote_table_name(table)}'::regclass
                 AND cons.contype = 'p'
                 AND pg_get_expr(def.adbin, def.adrelid) ~* 'nextval|uuid_generate'
             end_sql
           end
 
-          [result.first, result.last]
+          pk = result.shift
+          if result.last
+            [pk, PostgreSQL::Name.new(*result)]
+          else
+            [pk, nil]
+          end
         rescue
           nil
         end
@@ -372,7 +384,7 @@ module ActiveRecord
           clear_cache!
           execute "ALTER TABLE #{quote_table_name(table_name)} RENAME TO #{quote_table_name(new_name)}"
           pk, seq = pk_and_sequence_for(new_name)
-          if seq == "#{table_name}_#{pk}_seq"
+          if seq.identifier == "#{table_name}_#{pk}_seq"
             new_seq = "#{new_name}_#{pk}_seq"
             execute "ALTER TABLE #{quote_table_name(seq)} RENAME TO #{quote_table_name(new_seq)}"
           end

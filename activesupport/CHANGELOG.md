@@ -1,3 +1,30 @@
+*   Removed deprecated `Numeric#ago` and friends
+
+    Replacements:
+
+       5.ago   => 5.seconds.ago
+       5.until => 5.seconds.until
+       5.since => 5.seconds.since
+       5.from_now => 5.seconds.from_now
+
+    See #12389 for the history and rationale behind this.
+
+    *Godfrey Chan*
+
+*   DateTime `advance` now supports partial days.
+
+    Before:
+
+        DateTime.now.advance(days: 1, hours: 12)
+
+    After:
+
+        DateTime.now.advance(days: 1.5)
+
+    Fixes #12005.
+
+    *Shay Davidson*
+
 *   `Hash#deep_transform_keys` and `Hash#deep_transform_keys!` now transform hashes
     in nested arrays.  This change also applies to `Hash#deep_stringify_keys`,
     `Hash#deep_stringify_keys!`, `Hash#deep_symbolize_keys` and

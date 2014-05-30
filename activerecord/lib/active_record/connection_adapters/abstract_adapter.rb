@@ -1,9 +1,9 @@
 require 'date'
 require 'bigdecimal'
 require 'bigdecimal/util'
+require 'active_record/type'
 require 'active_support/core_ext/benchmark'
 require 'active_record/connection_adapters/schema_cache'
-require 'active_record/connection_adapters/type'
 require 'active_record/connection_adapters/abstract/schema_dumper'
 require 'active_record/connection_adapters/abstract/schema_creation'
 require 'monitor'
@@ -325,10 +325,6 @@ module ActiveRecord
         @connection
       end
 
-      def open_transactions
-        @transaction.number
-      end
-
       def create_savepoint(name = nil)
       end
 
@@ -367,6 +363,10 @@ module ActiveRecord
         end
       end
 
+      def new_column(name, default, cast_type, sql_type = nil, null = true)
+        Column.new(name, default, cast_type, sql_type, null)
+      end
+
       protected
 
       def lookup_cast_type(sql_type) # :nodoc:
@@ -396,6 +396,7 @@ module ActiveRecord
           precision = extract_precision(sql_type)
 
           if scale == 0
+            # FIXME: Remove this class as well
             Type::DecimalWithoutScale.new(precision: precision)
           else
             Type::Decimal.new(precision: precision, scale: scale)

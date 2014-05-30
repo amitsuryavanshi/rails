@@ -39,7 +39,7 @@ module ActionDispatch
 
           req.path_parameters = set_params.merge parameters
 
-          status, headers, body = route.app.call(req.env)
+          status, headers, body = route.app.serve(req)
 
           if 'pass' == headers['X-Cascade']
             req.script_name     = script_name
@@ -99,7 +99,10 @@ module ActionDispatch
           routes = filter_routes(req.path_info).concat custom_routes.find_all { |r|
             r.path.match(req.path_info)
           }
-          routes.concat get_routes_as_head(routes)
+
+          if req.env["REQUEST_METHOD"] === "HEAD"
+            routes.concat get_routes_as_head(routes)
+          end
 
           routes.sort_by!(&:precedence).select! { |r| r.matches?(req) }
 
@@ -115,7 +118,7 @@ module ActionDispatch
 
         def get_routes_as_head(routes)
           precedence = (routes.map(&:precedence).max || 0) + 1
-          routes = routes.select { |r|
+          routes.select { |r|
             r.verb === "GET" && !(r.verb === "HEAD")
           }.map! { |r|
             Route.new(r.name,
@@ -126,8 +129,6 @@ module ActionDispatch
                         route.precedence = r.precedence + precedence
                       end
           }
-          routes.flatten!
-          routes
         end
     end
   end

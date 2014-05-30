@@ -119,13 +119,13 @@ module ActiveRecord
         ADAPTER_NAME
       end
 
-      def schema_creation
+      def schema_creation # :nodoc:
         PostgreSQL::SchemaCreation.new self
       end
 
       # Adds `:array` option to the default set provided by the
       # AbstractAdapter
-      def prepare_column_options(column, types)
+      def prepare_column_options(column, types) # :nodoc:
         spec = super
         spec[:array] = 'true' if column.respond_to?(:array) && column.array
         spec[:default] = "\"#{column.default_function}\"" if column.default_function
@@ -406,7 +406,7 @@ module ActiveRecord
 
       private
 
-        def get_oid_type(oid, fmod, column_name, sql_type = '')
+        def get_oid_type(oid, fmod, column_name, sql_type = '') # :nodoc:
           if !type_map.key?(oid)
             load_additional_types(type_map, [oid])
           end
@@ -419,7 +419,7 @@ module ActiveRecord
           }
         end
 
-        def initialize_type_map(m)
+        def initialize_type_map(m) # :nodoc:
           register_class_with_limit m, 'int2', OID::Integer
           m.alias_type 'int4', 'int2'
           m.alias_type 'int8', 'int2'
@@ -478,6 +478,8 @@ module ActiveRecord
             # places after decimal  = fmod - 4 & 0xffff
             # places before decimal = (fmod - 4) >> 16 & 0xffff
             if fmod && (fmod - 4 & 0xffff).zero?
+              # FIXME: Remove this class, and the second argument to
+              # lookups on PG
               Type::DecimalWithoutScale.new(precision: precision)
             else
               OID::Decimal.new(precision: precision, scale: scale)
@@ -496,7 +498,7 @@ module ActiveRecord
         end
 
         # Extracts the value from a PostgreSQL column default definition.
-        def extract_value_from_default(default)
+        def extract_value_from_default(default) # :nodoc:
           # This is a performance optimization for Ruby 1.9.2 in development.
           # If the value is nil, we return nil straight away without checking
           # the regular expressions. If we check each regular expression,
@@ -558,15 +560,15 @@ module ActiveRecord
           end
         end
 
-        def extract_default_function(default_value, default)
+        def extract_default_function(default_value, default) # :nodoc:
           default if has_default_function?(default_value, default)
         end
 
-        def has_default_function?(default_value, default)
+        def has_default_function?(default_value, default) # :nodoc:
           !default_value && (%r{\w+\(.*\)} === default)
         end
 
-        def load_additional_types(type_map, oids = nil)
+        def load_additional_types(type_map, oids = nil) # :nodoc:
           if supports_ranges?
             query = <<-SQL
               SELECT t.oid, t.typname, t.typelem, t.typdelim, t.typinput, r.rngsubtype, t.typtype, t.typbasetype
@@ -758,16 +760,6 @@ module ActiveRecord
                  AND a.attnum > 0 AND NOT a.attisdropped
                ORDER BY a.attnum
           end_sql
-        end
-
-        def extract_pg_identifier_from_name(name) # :nodoc:
-          match_data = name.start_with?('"') ? name.match(/\"([^\"]+)\"/) : name.match(/([^\.]+)/)
-
-          if match_data
-            rest = name[match_data[0].length, name.length]
-            rest = rest[1, rest.length] if rest.start_with? "."
-            [match_data[1], (rest.length > 0 ? rest : nil)]
-          end
         end
 
         def extract_table_ref_from_insert_sql(sql) # :nodoc:

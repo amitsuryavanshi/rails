@@ -1,3 +1,34 @@
+*   PostgreSQL `reset_pk_sequence!` respects schemas. Fixes #14719.
+
+    *Yves Senn*
+
+*   Keep PostgreSQL `hstore` and `json` attributes as `Hash` in `@attributes`.
+    Fixes duplication in combination with `store_accessor`.
+
+    Fixes #15369.
+
+    *Yves Senn*
+
+*   `rake railties:install:migrations` respects the order of railties.
+
+    *Arun Agrawal*
+
+*   Fix redefine a has_and_belongs_to_many inside inherited class
+    Fixing regression case, where redefining the same has_an_belongs_to_many
+    definition into a subclass would raise.
+
+    Fixes #14983.
+
+    *arthurnn*
+
+*   Fix has_and_belongs_to_many public reflection.
+    When defining a has_and_belongs_to_many, internally we convert that to two has_many.
+    But as `reflections` is a public API, people expect to see the right macro.
+
+    Fixes #14682.
+
+    *arthurnn*
+
 *   Fixed serialization for records with an attribute named `format`.
 
     Fixes #15188.
@@ -22,7 +53,7 @@
 
 *   Change belongs_to touch to be consistent with timestamp updates
 
-    If a model is set up with a belongs_to: touch relatinoship the parent
+    If a model is set up with a belongs_to: touch relationship the parent
     record will only be touched if the record was modified. This makes it
     consistent with timestamp updating on the record itself.
 

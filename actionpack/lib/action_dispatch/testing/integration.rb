@@ -3,7 +3,6 @@ require 'uri'
 require 'active_support/core_ext/kernel/singleton_class'
 require 'active_support/core_ext/object/try'
 require 'rack/test'
-require 'minitest'
 
 module ActionDispatch
   module Integration #:nodoc:
@@ -268,12 +267,6 @@ module ActionDispatch
             https! URI::HTTPS === location if location.scheme
             host! "#{location.host}:#{location.port}" if location.host
             path = location.query ? "#{location.path}?#{location.query}" : location.path
-          end
-
-          unless ActionController::Base < ActionController::Testing
-            ActionController::Base.class_eval do
-              include ActionController::Testing
-            end
           end
 
           hostname, port = host.split(':')

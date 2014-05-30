@@ -11,7 +11,7 @@ module ActionView
     # the assets exist before linking to them:
     #
     #   image_tag("rails.png")
-    #   # => <img alt="Rails" src="/assets/rails.png" />
+    #   # => <img alt="Rails" src="/images/rails.png" />
     #   stylesheet_link_tag("application")
     #   # => <link href="/assets/application.css?body=1" media="screen" rel="stylesheet" />
     module AssetTagHelper
@@ -20,7 +20,8 @@ module ActionView
       include AssetUrlHelper
       include TagHelper
 
-      # Returns an HTML script tag for each of the +sources+ provided.
+      # Returns an HTML script tag for each of the +sources+ provided. If
+      # you don't specify an extension, <tt>.js</tt> will be appended automatically.
       #
       # Sources may be paths to JavaScript files. Relative paths are assumed to be relative
       # to <tt>assets/javascripts</tt>, full paths are assumed to be relative to the document
@@ -33,19 +34,19 @@ module ActionView
       # last argument.
       #
       # When the Asset Pipeline is enabled, you can pass the name of your manifest as
-      # source, and include other JavaScript or CoffeeScript files inside the manifest.
+      # source and include other JavaScript or CoffeeScript files inside the manifest.
       #
       #   javascript_include_tag "xmlhr"
-      #   # => <script src="/assets/xmlhr.js?1284139606"></script>
+      #   # => <script src="/javascripts/xmlhr.js?1284139606"></script>
       #
       #   javascript_include_tag "template.jst", extname: false
-      #   # => <script src="/assets/template.jst?1284139606"></script>
+      #   # => <script src="/javascripts/template.jst?1284139606"></script>
       #
       #   javascript_include_tag "xmlhr.js"
-      #   # => <script src="/assets/xmlhr.js?1284139606"></script>
+      #   # => <script src="/javascripts/xmlhr.js?1284139606"></script>
       #
       #   javascript_include_tag "common.javascript", "/elsewhere/cools"
-      #   # => <script src="/assets/common.javascript?1284139606"></script>
+      #   # => <script src="/javascripts/common.javascript?1284139606"></script>
       #   #    <script src="/elsewhere/cools.js?1423139606"></script>
       #
       #   javascript_include_tag "http://www.example.com/xmlhr"
@@ -72,22 +73,22 @@ module ActionView
       # apply to all media types.
       #
       #   stylesheet_link_tag "style"
-      #   # => <link href="/assets/style.css" media="screen" rel="stylesheet" />
+      #   # => <link href="/stylesheets/style.css" media="screen" rel="stylesheet" />
       #
       #   stylesheet_link_tag "style.css"
-      #   # => <link href="/assets/style.css" media="screen" rel="stylesheet" />
+      #   # => <link href="/stylesheets/style.css" media="screen" rel="stylesheet" />
       #
       #   stylesheet_link_tag "http://www.example.com/style.css"
       #   # => <link href="http://www.example.com/style.css" media="screen" rel="stylesheet" />
       #
       #   stylesheet_link_tag "style", media: "all"
-      #   # => <link href="/assets/style.css" media="all" rel="stylesheet" />
+      #   # => <link href="/stylesheets/style.css" media="all" rel="stylesheet" />
       #
       #   stylesheet_link_tag "style", media: "print"
-      #   # => <link href="/assets/style.css" media="print" rel="stylesheet" />
+      #   # => <link href="/stylesheets/style.css" media="print" rel="stylesheet" />
       #
       #   stylesheet_link_tag "random.styles", "/css/stylish"
-      #   # => <link href="/assets/random.styles" media="screen" rel="stylesheet" />
+      #   # => <link href="/stylesheets/random.styles" media="screen" rel="stylesheet" />
       #   #    <link href="/css/stylish.css" media="screen" rel="stylesheet" />
       def stylesheet_link_tag(*sources)
         options = sources.extract_options!.stringify_keys
@@ -158,17 +159,17 @@ module ActionView
       # respectively:
       #
       #   favicon_link_tag
-      #   # => <link href="/assets/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+      #   # => <link href="/images/favicon.ico" rel="shortcut icon" type="image/x-icon" />
       #
       #   favicon_link_tag 'myicon.ico'
-      #   # => <link href="/assets/myicon.ico" rel="shortcut icon" type="image/x-icon" />
+      #   # => <link href="/images/myicon.ico" rel="shortcut icon" type="image/x-icon" />
       #
       # Mobile Safari looks for a different link tag, pointing to an image that
       # will be used if you add the page to the home screen of an iOS device.
       # The following call would generate such a tag:
       #
       #   favicon_link_tag 'mb-icon.png', rel: 'apple-touch-icon', type: 'image/png'
-      #   # => <link href="/assets/mb-icon.png" rel="apple-touch-icon" type="image/png" />
+      #   # => <link href="/images/mb-icon.png" rel="apple-touch-icon" type="image/png" />
       def favicon_link_tag(source='favicon.ico', options={})
         tag('link', {
           :rel  => 'shortcut icon',
@@ -258,19 +259,19 @@ module ActionView
       # ==== Examples
       #
       #   video_tag("trailer")
-      #   # => <video src="/videos/trailer" />
+      #   # => <video src="/videos/trailer"></video>
       #   video_tag("trailer.ogg")
-      #   # => <video src="/videos/trailer.ogg" />
+      #   # => <video src="/videos/trailer.ogg"></video>
       #   video_tag("trailer.ogg", controls: true, autobuffer: true)
-      #   # => <video autobuffer="autobuffer" controls="controls" src="/videos/trailer.ogg" />
+      #   # => <video autobuffer="autobuffer" controls="controls" src="/videos/trailer.ogg" ></video>
       #   video_tag("trailer.m4v", size: "16x10", poster: "screenshot.png")
-      #   # => <video src="/videos/trailer.m4v" width="16" height="10" poster="/assets/screenshot.png" />
+      #   # => <video src="/videos/trailer.m4v" width="16" height="10" poster="/images/screenshot.png"></video>
       #   video_tag("/trailers/hd.avi", size: "16x16")
-      #   # => <video src="/trailers/hd.avi" width="16" height="16" />
+      #   # => <video src="/trailers/hd.avi" width="16" height="16"></video>
       #   video_tag("/trailers/hd.avi", size: "16")
-      #   # => <video height="16" src="/trailers/hd.avi" width="16" />
+      #   # => <video height="16" src="/trailers/hd.avi" width="16"></video>
       #   video_tag("/trailers/hd.avi", height: '32', width: '32')
-      #   # => <video height="32" src="/trailers/hd.avi" width="32" />
+      #   # => <video height="32" src="/trailers/hd.avi" width="32"></video>
       #   video_tag("trailer.ogg", "trailer.flv")
       #   # => <video><source src="/videos/trailer.ogg" /><source src="/videos/trailer.flv" /></video>
       #   video_tag(["trailer.ogg", "trailer.flv"])
@@ -289,11 +290,11 @@ module ActionView
       # your public audios directory.
       #
       #   audio_tag("sound")
-      #   # => <audio src="/audios/sound" />
+      #   # => <audio src="/audios/sound"></audio>
       #   audio_tag("sound.wav")
-      #   # => <audio src="/audios/sound.wav" />
+      #   # => <audio src="/audios/sound.wav"></audio>
       #   audio_tag("sound.wav", autoplay: true, controls: true)
-      #   # => <audio autoplay="autoplay" controls="controls" src="/audios/sound.wav" />
+      #   # => <audio autoplay="autoplay" controls="controls" src="/audios/sound.wav"></audio>
       #   audio_tag("sound.wav", "sound.mid")
       #   # => <audio><source src="/audios/sound.wav" /><source src="/audios/sound.mid" /></audio>
       def audio_tag(*sources)

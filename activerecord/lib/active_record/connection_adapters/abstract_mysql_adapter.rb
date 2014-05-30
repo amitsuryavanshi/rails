@@ -178,17 +178,6 @@ module ActiveRecord
         true
       end
 
-      def type_cast(value, column)
-        case value
-        when TrueClass
-          1
-        when FalseClass
-          0
-        else
-          super
-        end
-      end
-
       # MySQL 4 technically support transaction isolation, but it is affected by a bug
       # where the transaction level gets persisted for the whole session:
       #
@@ -217,8 +206,7 @@ module ActiveRecord
         raise NotImplementedError
       end
 
-      def new_column(field, default, sql_type, null, collation, extra = "") # :nodoc:
-        cast_type = lookup_cast_type(sql_type)
+      def new_column(field, default, cast_type, sql_type = nil, null = true, collation = "", extra = "") # :nodoc:
         Column.new(field, default, cast_type, sql_type, null, collation, strict_mode?, extra)
       end
 
@@ -234,8 +222,6 @@ module ActiveRecord
         if value.kind_of?(String) && column && column.type == :binary
           s = value.unpack("H*")[0]
           "x'#{s}'"
-        elsif value.kind_of?(BigDecimal)
-          value.to_s("F")
         else
           super
         end
@@ -253,8 +239,16 @@ module ActiveRecord
         QUOTED_TRUE
       end
 
+      def unquoted_true
+        1
+      end
+
       def quoted_false
         QUOTED_FALSE
+      end
+
+      def unquoted_false
+        0
       end
 
       # REFERENTIAL INTEGRITY ====================================
@@ -430,7 +424,9 @@ module ActiveRecord
         execute_and_free(sql, 'SCHEMA') do |result|
           each_hash(result).map do |field|
             field_name = set_field_encoding(field[:Field])
-            new_column(field_name, field[:Default], field[:Type], field[:Null] == "YES", field[:Collation], field[:Extra])
+            sql_type = field[:Type]
+            cast_type = lookup_cast_type(sql_type)
+            new_column(field_name, field[:Default], cast_type, sql_type, field[:Null] == "YES", field[:Collation], field[:Extra])
           end
         end
       end

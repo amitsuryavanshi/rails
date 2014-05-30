@@ -15,10 +15,10 @@ module ActiveRecord
 
         def test_type_cast_binary_encoding_without_logger
           @conn.extend(Module.new { def logger; end })
-          column = Struct.new(:type, :name).new(:string, "foo")
+          cast_type = Type::String.new
           binary = SecureRandom.hex
           expected = binary.dup.encode!(Encoding::UTF_8)
-          assert_equal expected, @conn.type_cast(binary, column)
+          assert_equal expected, @conn.type_cast(binary, cast_type)
         end
 
         def test_type_cast_symbol
@@ -84,7 +84,7 @@ module ActiveRecord
           assert_raise(TypeError) { @conn.type_cast(obj, nil) }
         end
 
-        def test_quoted_id
+        def test_type_cast_object_which_responds_to_quoted_id
           quoted_id_obj = Class.new {
             def quoted_id
               "'zomg'"
