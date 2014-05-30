@@ -37,10 +37,24 @@ Please refer to the
 [Changelog](https://github.com/rails/rails/blob/4-2-stable/railties/CHANGELOG.md)
 for detailed changes.
 
+### Removals
+
+* The `rails application` command has been removed without replacement.
+  ([Pull Request](https://github.com/rails/rails/pull/11616))
+
 ### Notable changes
 
-* ...
-* ...
+* Introduced `bin/setup` script to bootstrap an application.
+  ([Pull Request](https://github.com/rails/rails/pull/15189))
+
+* Changed default value for `config.assets.digest` to `true` in development.
+  ([Pull Request](https://github.com/rails/rails/pull/15155))
+
+* Introduced an API to register new extensions for `rake notes`.
+  ([Pull Request](https://github.com/rails/rails/pull/14379))
+
+* Introduced `Rails.gem_version` as a convenience method to return `Gem::Version.new(Rails.version)`.
+  ([Pull Request](https://github.com/rails/rails/pull/14101))
 
 
 Action Pack
